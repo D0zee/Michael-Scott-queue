@@ -7,44 +7,33 @@ class MSQueue<E> : Queue<E> {
 
     override fun enqueue(element: E) {
         val node = Node(element)
-        while(true){
-            val tailSnap = tail.get()
-            if (tailSnap == tail.get()){
-                val next = tailSnap.next.get()
-                if (next != null){
-                    tail.compareAndSet(tailSnap, next)
-                }
-                else{
-                    if (tailSnap.next.compareAndSet(null, node)) {
-                        tail.compareAndSet(tailSnap, node)
-                        return
-                    }
-                }
-            }
+        var suc = false
+        while (!suc) {
+            val curTail = tail.get()
+            suc = curTail.next.compareAndSet(null, node)
+            tail.compareAndSet(curTail, curTail.next.get())
         }
     }
 
     override fun dequeue(): E? {
-        while(true){
-            val headSnap = head.get()
-            if (headSnap == head.get()){
-                val tailSnap = tail.get()
-                val next = headSnap.next.get()
-                if (headSnap == tailSnap){
-                    if (next == null) {
-                        return null
-                    }
-                    tail.compareAndSet(tailSnap, next)
+        while (true) {
+            val curHead = head.get()
+            val curTail = tail.get()
+            val next = curHead.next.get()
+            if (curHead == curTail) {
+                if (next == null) {
+                    return null
                 }
-                else{
-                    if (head.compareAndSet(headSnap, next)){
-                        val elem = next?.element
-                        next?.element = null
-                        return elem
-                    }
+                tail.compareAndSet(curHead, next)
+            } else {
+                if (head.compareAndSet(curHead, next)) {
+                    val elem = next?.element
+                    next?.element = null
+                    return elem
                 }
             }
         }
+
     }
 
     // FOR TEST PURPOSE, DO NOT CHANGE IT.
