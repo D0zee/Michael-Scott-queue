@@ -2,15 +2,15 @@ import java.util.concurrent.atomic.AtomicReference
 
 class MSQueue<E> : Queue<E> {
     private val dummy = Node<E>(null)
-    private var head: AtomicReference<Node<E>> = AtomicReference(dummy)
-    private var tail: AtomicReference<Node<E>> = AtomicReference(dummy)
+    private val head: AtomicReference<Node<E>> = AtomicReference(dummy)
+    private val tail: AtomicReference<Node<E>> = AtomicReference(dummy)
 
     override fun enqueue(element: E) {
         val node = Node(element)
-        var suc = false
-        while (!suc) {
+        var success = false
+        while (!success) {
             val curTail = tail.get()
-            suc = curTail.next.compareAndSet(null, node)
+            success = curTail.next.compareAndSet(null, node)
             tail.compareAndSet(curTail, curTail.next.get())
         }
     }
@@ -19,21 +19,20 @@ class MSQueue<E> : Queue<E> {
         while (true) {
             val curHead = head.get()
             val curTail = tail.get()
-            val next = curHead.next.get()
+            val nodeAfterHead = curHead.next.get()
             if (curHead == curTail) {
-                if (next == null) {
+                if (nodeAfterHead == null) {
                     return null
                 }
-                tail.compareAndSet(curHead, next)
+                tail.compareAndSet(curTail, nodeAfterHead)
             } else {
-                if (head.compareAndSet(curHead, next)) {
-                    val elem = next?.element
-                    next?.element = null
+                val elem = nodeAfterHead?.element
+                if (head.compareAndSet(curHead, nodeAfterHead)) {
+                    nodeAfterHead?.element = null
                     return elem
                 }
             }
         }
-
     }
 
     // FOR TEST PURPOSE, DO NOT CHANGE IT.
